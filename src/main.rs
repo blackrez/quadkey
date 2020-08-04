@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 //pub use geo_types::{Coordinate};
 use  std::f64::consts::PI;
 
-const MAX_ZOOM:i32 = 31;
+const MAX_ZOOM:u8 = 31;
 const MAX_LONGITUDE:f64 = 180.0;
 const MAX_LATITUDE:f64 = 85.05112877980659;
 
@@ -89,6 +89,12 @@ fn lonlat2xy(lon:f64, lat:f64, zoom: u8) -> (i64, i64) {
 
 }
 
+fn lonlat2quadint(lon:f64, lat:f64) -> i64 {
+	let (x,y) = lonlat2xy(lon, lat, MAX_ZOOM);
+	let quadint = xy2quadint(x,y);
+	return quadint
+}
+
 fn main() {
 let r = xy2quadint(5,6);
 println!("xy2quadint {:?}", r);
@@ -96,4 +102,6 @@ let r = intquadxy(57);
 println!("intquadxy {:?}", r);
 let r = lonlat2xy(5.7, 43.2, 4);
 println!("lonlat2xy {:?}", r);
+let r = lonlat2quadint(-73.969558715820312, 4.0);
+println!("lonlat2quadint {:?}", r);
 }
