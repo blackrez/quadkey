@@ -17,7 +17,7 @@ const WM_RANGE:f64 = 2.0*PI*WEBMERCATOR_R;
 const INV_WM_RANGE:f64 = 1.0/WM_RANGE;
 const WM_MAX:f64 = PI*WEBMERCATOR_R;
 
-fn xy2quadint(mut x: i64,mut y: i64) -> i64 {
+pub fn xy2quadint(mut x: i64,mut y: i64) -> i64 {
 
     const B:(i64, i64, i64, i64, i64) = (0x5555555555555555, 0x3333333333333333, 0x0F0F0F0F0F0F0F0F, 0x00FF00FF00FF00FF, 0x0000FFFF0000FFFF);
     const S:(i64, i64, i64, i64, i64) = (1, 2, 4, 8, 16);
@@ -41,7 +41,7 @@ fn xy2quadint(mut x: i64,mut y: i64) -> i64 {
 
 }
 
-fn intquadxy(quadint: i64) ->  (i64, i64) {
+pub fn intquadxy(quadint: i64) ->  (i64, i64) {
     const B:(i64, i64, i64, i64, i64, i64) = (
         0x5555555555555555, 0x3333333333333333, 0x0F0F0F0F0F0F0F0F, 0x00FF00FF00FF00FF, 0x0000FFFF0000FFFF,
         0x00000000FFFFFFFF
@@ -72,36 +72,57 @@ fn intquadxy(quadint: i64) ->  (i64, i64) {
     return (x, y)
 }
 
-fn lonlat2xy(lon:f64, lat:f64, zoom: u8) -> (i64, i64) {
+pub fn lonlat2xy(lon:f64, lat:f64) -> (i64, i64) {
   let _lon = MAX_LONGITUDE.min(MIN_LONGITUDE.max(lon));
-  let _lat = MAX_LATITUDE.max(MIN_LATITUDE.max(lat));
+  let _lat = MAX_LATITUDE.min(MIN_LATITUDE.max(lat));
+  println!(" {:?}", _lon);
+  println!("{:?}", _lat);
 
   let fx = (_lon+180.0)/360.0;
   let sinlat = (_lat * PI/180.0).sin();
   let fy = 0.5 - ((1.0+sinlat)/(1.0-sinlat)).log10() / (4.0*PI);
-
-  let mapsize = (1 << zoom) as f64;
+  println!("{:?}", fx);
+  println!("{:?}", sinlat);
+  println!("{:?}", fy);
+  let mapsize = (1 << MAX_ZOOM) as f64;
+  println!("{:?}", mapsize);
   let _x = (fx*mapsize).floor() as i64;
+  println!("{:?}", _x);
   let _y = (fy*mapsize).floor() as i64;
+  println!("{:?}", _y);
   let x = min(mapsize as i64 - 1, min(0, _x));
   let y = max(mapsize as i64 - 1, max(0, _y));
   return (x, y)
 
 }
 
-fn lonlat2quadint(lon:f64, lat:f64) -> i64 {
-	let (x,y) = lonlat2xy(lon, lat, MAX_ZOOM);
+pub fn lonlat2quadint(lon:f64, lat:f64) -> i64 {
+	let (x,y) = lonlat2xy(lon, lat);
 	let quadint = xy2quadint(x,y);
 	return quadint
 }
 
-fn main() {
-let r = xy2quadint(5,6);
-println!("xy2quadint {:?}", r);
-let r = intquadxy(57);
-println!("intquadxy {:?}", r);
-let r = lonlat2xy(5.7, 43.2, 4);
-println!("lonlat2xy {:?}", r);
-let r = lonlat2quadint(-73.969558715820312, 4.0);
-println!("lonlat2quadint {:?}", r);
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn xy2quandint_test() {
+        assert_eq!(57, xy2quadint(5,6));
+    }
+    #[test]
+    fn intquadxy_test() {
+    	assert_eq!((5,6), intquadxy(57));
+    }
+    #[test]
+    fn lonlat2xy_test() {
+    	let xy = lonlat2xy(-73.969558715820312, 40.757678985595703);
+    	assert_eq!((632496219, 807059307), xy);
+    }
+
+    #[test]
+    fn longlat2quadint_test() {
+    	let quadint = lonlat2quadint(-73.969558715820312, 40.757678985595703);
+    	assert_eq!(1013670064444553679, quadint);
+    }
 }
